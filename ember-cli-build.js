@@ -2,8 +2,29 @@
 
 const EmberApp = require('ember-cli/lib/broccoli/ember-app');
 
+const Funnel = require('broccoli-funnel');
+const MergeTrees = require('broccoli-merge-trees');
+const fastbootTransform = require('fastboot-transform');
+const concat = require('broccoli-concat');
+
+const files = ['lib1.js', 'lib2.js'];
+
+const lib = concat(
+  new Funnel('vendor/lib', {
+    destDir: 'assets',
+    include: files
+  }),
+  {
+    outputFile: 'assets/parent_lib.js',
+    headerFiles: files.map(f => `assets/${f}`),
+    inputFiles: ['**/*']
+  }
+);
+
+const libFB = fastbootTransform(lib);
+
 module.exports = function(defaults) {
-  let app = new EmberApp(defaults, {
+  var app = new EmberApp(defaults, {
     // Add options here
   });
 
@@ -20,5 +41,5 @@ module.exports = function(defaults) {
   // please specify an object with the list of modules as keys
   // along with the exports of each module as its value.
 
-  return app.toTree();
+  return new MergeTrees([app.toTree(), libFB]);
 };
